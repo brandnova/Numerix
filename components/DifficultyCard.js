@@ -1,6 +1,7 @@
 import { Pressable, View, Text, StyleSheet, Animated } from 'react-native';
 import { SPACING, TYPOGRAPHY } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
+import { DIFFICULTIES } from '../constants/difficulties';
 
 export default function DifficultyCard({ difficulty, config, stats, onSelect }) {
   const { colors } = useTheme();

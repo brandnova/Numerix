@@ -4,6 +4,7 @@ const KEYS = {
   USER_STATS: '@numerix_user_stats',
   ACHIEVEMENTS: '@numerix_achievements',
   DAILY_CHALLENGE: '@numerix_daily_challenge',
+  SPEED_STATS: '@numerix_speed_stats',
   SETTINGS: '@numerix_settings',
 };
 
@@ -31,6 +32,29 @@ const DEFAULT_STATS = {
     medium: { games: 0, wins: 0, totalAttempts: 0, bestAttempts: null },
     hard: { games: 0, wins: 0, totalAttempts: 0, bestAttempts: null },
   },
+  // Added speed stats to main stats for achievement checking
+  speedStats: {
+    totalGames: 0,
+    totalWins: 0,
+    totalLosses: 0,
+    currentWinStreak: 0,
+    longestWinStreak: 0,
+    bestTime: null,
+    averageTime: 0,
+    totalTimePlayed: 0,
+    perfectGames: 0, // Games won with max time remaining
+    bestGuesses: null, // Fewest guesses to win
+    averageGuesses: 0,
+    highestScore: 0,
+    totalScore: 0,
+    levelsCompleted: {
+      1: { completions: 0, bestTime: null, bestScore: 0 },
+      2: { completions: 0, bestTime: null, bestScore: 0 },
+      3: { completions: 0, bestTime: null, bestScore: 0 },
+      4: { completions: 0, bestTime: null, bestScore: 0 },
+      5: { completions: 0, bestTime: null, bestScore: 0 },
+    }
+  },
 };
 
 const DEFAULT_ACHIEVEMENTS = [];
@@ -40,6 +64,29 @@ const DEFAULT_DAILY = {
   currentStreak: 0,
   longestStreak: 0,
   results: [],
+};
+
+const DEFAULT_SPEED_STATS = {
+  totalGames: 0,
+  totalWins: 0,
+  totalLosses: 0,
+  currentWinStreak: 0,
+  longestWinStreak: 0,
+  bestTime: null,
+  averageTime: 0,
+  totalTimePlayed: 0,
+  perfectGames: 0,
+  bestGuesses: null,
+  averageGuesses: 0,
+  highestScore: 0,
+  totalScore: 0,
+  levelsCompleted: {
+    1: { completions: 0, bestTime: null, bestScore: 0 },
+    2: { completions: 0, bestTime: null, bestScore: 0 },
+    3: { completions: 0, bestTime: null, bestScore: 0 },
+    4: { completions: 0, bestTime: null, bestScore: 0 },
+    5: { completions: 0, bestTime: null, bestScore: 0 },
+  }
 };
 
 export const Storage = {
@@ -69,9 +116,14 @@ export const Storage = {
   async getStats() {
     try {
       const data = await AsyncStorage.getItem(KEYS.USER_STATS);
-      return data ? JSON.parse(data) : DEFAULT_STATS;
+      const stats = data ? JSON.parse(data) : DEFAULT_STATS;
+      
+      // Merge with detailed speed stats
+      const speedStats = await this.getSpeedStats();
+      stats.speedStats = { ...stats.speedStats, ...speedStats };
+      
+      return stats;
     } catch (error) {
-      console.error('Error reading stats:', error);
       return DEFAULT_STATS;
     }
   },
@@ -80,9 +132,20 @@ export const Storage = {
   async saveStats(stats) {
     try {
       await AsyncStorage.setItem(KEYS.USER_STATS, JSON.stringify(stats));
-      return true;
+      
+      // Also update the detailed speed stats if they exist in main stats
+      if (stats.speedStats) {
+        await this.saveSpeedStats(stats.speedStats);
+      }
+      
+      // Verify the save worked
+      const verified = await AsyncStorage.getItem(KEYS.USER_STATS);
+      if (verified) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (error) {
-      console.error('Error saving stats:', error);
       return false;
     }
   },
@@ -127,6 +190,28 @@ export const Storage = {
       return true;
     } catch (error) {
       console.error('Error saving daily challenge:', error);
+      return false;
+    }
+  },
+
+  // Get speed stats
+  async getSpeedStats() {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.SPEED_STATS);
+      return data ? JSON.parse(data) : DEFAULT_SPEED_STATS;
+    } catch (error) {
+      console.error('Error reading speed stats:', error);
+      return DEFAULT_SPEED_STATS;
+    }
+  },
+
+  // Save speed stats
+  async saveSpeedStats(stats) {
+    try {
+      await AsyncStorage.setItem(KEYS.SPEED_STATS, JSON.stringify(stats));
+      return true;
+    } catch (error) {
+      console.error('Error saving speed stats:', error);
       return false;
     }
   },

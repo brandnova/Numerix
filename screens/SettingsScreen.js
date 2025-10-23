@@ -28,13 +28,6 @@ export default function SettingsScreen({ navigation }) {
     setSettings(userSettings);
   };
 
-  const handleThemeChange = async (themeId) => {
-    const updatedSettings = { ...settings, theme: themeId };
-    setSettings(updatedSettings);
-    await Storage.saveSettings(updatedSettings);
-    changeTheme(themeId);
-  };
-
   const handleToggleSetting = async (key) => {
     const updatedSettings = { ...settings, [key]: !settings[key] };
     setSettings(updatedSettings);
@@ -89,37 +82,23 @@ export default function SettingsScreen({ navigation }) {
           </Pressable>
         </View>
 
-        {/* Theme Section */}
+        {/* Appearance Section */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Appearance</Text>
-          <View style={styles.themeGrid}>
-            {THEME_OPTIONS.map((theme) => (
-              <Pressable
-                key={theme.id}
-                onPress={() => handleThemeChange(theme.id)}
-                style={[
-                  styles.themeCard,
-                  { 
-                    backgroundColor: THEMES[theme.id].cardBg,
-                    borderColor: currentTheme === theme.id ? colors.primary : 'transparent'
-                  }
-                ]}
-              >
-                <View style={[
-                  styles.themePreview,
-                  { backgroundColor: THEMES[theme.id].background }
-                ]}>
-                  <View style={[styles.themeAccent, { backgroundColor: THEMES[theme.id].primary }]} />
-                </View>
-                <Text style={[styles.themeName, { color: THEMES[theme.id].text }]}>
-                  {theme.name}
+          
+          <Pressable 
+            style={[styles.actionButton, { backgroundColor: colors.cardBg, borderColor: colors.border }]} 
+            onPress={() => navigation.navigate('ThemeSelection')}
+          >
+            <View style={styles.actionButtonContent}>
+              <View>
+                <Text style={[styles.actionButtonText, { color: colors.text }]}>Change Theme</Text>
+                <Text style={[styles.actionButtonSubtext, { color: colors.textSecondary }]}>
+                  Currently: {THEME_OPTIONS.find(t => t.id === currentTheme)?.name}
                 </Text>
-                <Text style={[styles.themeDescription, { color: THEMES[theme.id].textSecondary }]}>
-                  {theme.description}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+              </View>
+            </View>
+          </Pressable>
         </View>
 
         {/* Audio Settings */}
@@ -193,7 +172,7 @@ export default function SettingsScreen({ navigation }) {
             onPress={handleAbout}
           >
             <Text style={[styles.actionButtonText, { color: colors.text }]}>About NUMERIX</Text>
-            <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>→</Text>
+            <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>➡</Text>
           </Pressable>
 
           <Pressable 
@@ -201,7 +180,7 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => Alert.alert('Coming Soon', 'Tutorial feature coming soon!')}
           >
             <Text style={[styles.actionButtonText, { color: colors.text }]}>How to Play</Text>
-            <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>→</Text>
+            <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>➡</Text>
           </Pressable>
 
           <Pressable 
@@ -209,7 +188,7 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => Alert.alert('Coming Soon', 'Rate feature coming soon!')}
           >
             <Text style={[styles.actionButtonText, { color: colors.text }]}>Rate NUMERIX</Text>
-            <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>→</Text>
+            <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>➡</Text>
           </Pressable>
 
           <Pressable 
@@ -217,7 +196,7 @@ export default function SettingsScreen({ navigation }) {
             onPress={() => Alert.alert('Coming Soon', 'Share feature coming soon!')}
           >
             <Text style={[styles.actionButtonText, { color: colors.text }]}>Share with Friends</Text>
-            <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>→</Text>
+            <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>➡</Text>
           </Pressable>
         </View>
 
@@ -233,7 +212,7 @@ export default function SettingsScreen({ navigation }) {
           </Pressable>
         </View>
 
-        <Text style={[styles.versionText, { color: colors.textMuted }]}>NUMERIX v1.0.0</Text>
+        <Text style={[styles.versionText, { color: colors.textMuted }]}>NUMERIX v2.0.0</Text>
       </ScrollView>
     </View>
   );

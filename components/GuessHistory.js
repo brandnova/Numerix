@@ -22,7 +22,7 @@ function GuessHistoryItem({ guess, target }) {
     <View style={[styles.item, { backgroundColor: bgColor }]}>
       <Text style={[styles.number, { color: textColor }]}>{guess}</Text>
       <Text style={[styles.arrow, { color: textColor }]}>
-        {tooHigh ? '↓' : '↑'}
+        {tooHigh ? '⬇' : '⬆'}
       </Text>
     </View>
   );

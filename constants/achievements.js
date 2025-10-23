@@ -165,6 +165,64 @@ export const ACHIEVEMENTS = [
     condition: (stats) => stats.dailyStreak >= 30,
   },
 
+  // Speed Mode Achievements
+  {
+    id: 'speed_beginner',
+    title: 'Speed Demon',
+    description: 'Complete your first speed challenge',
+    category: 'speed',
+    condition: (stats) => stats.speedStats?.totalGames >= 1,
+  },
+  {
+    id: 'speed_master',
+    title: 'Lightning Fast',
+    description: 'Complete 10 speed challenges',
+    category: 'speed',
+    condition: (stats) => stats.speedStats?.totalGames >= 10,
+  },
+  {
+    id: 'speed_perfect',
+    title: 'Flawless Victory',
+    description: 'Win a speed challenge with maximum time remaining',
+    category: 'speed',
+    condition: (stats) => stats.speedStats?.perfectGames >= 1,
+  },
+  {
+    id: 'speed_under_30',
+    title: 'Blink And Miss',
+    description: 'Complete any speed challenge in under 30 seconds',
+    category: 'speed',
+    condition: (stats) => stats.speedStats?.bestTime !== null && stats.speedStats.bestTime <= 30,
+  },
+  {
+    id: 'speed_level_5',
+    title: 'Speed Champion',
+    description: 'Complete level 5 speed challenge',
+    category: 'speed',
+    condition: (stats) => stats.speedStats?.levelsCompleted?.[5]?.completions >= 1,
+  },
+  {
+    id: 'speed_high_score',
+    title: 'Point Collector',
+    description: 'Achieve a score over 1000 in speed mode',
+    category: 'speed',
+    condition: (stats) => stats.speedStats?.highestScore >= 1000,
+  },
+  {
+    id: 'speed_streak_5',
+    title: 'Speed Streak',
+    description: 'Win 5 speed challenges in a row',
+    category: 'speed',
+    condition: (stats) => stats.speedStats?.currentWinStreak >= 5,
+  },
+  {
+    id: 'speed_efficiency',
+    title: 'Efficient Mind',
+    description: 'Win a speed challenge with 3 or fewer guesses',
+    category: 'speed',
+    condition: (stats) => stats.speedStats?.bestGuesses !== null && stats.speedStats.bestGuesses <= 3,
+  },
+
   // Win Rate Achievements
   {
     id: 'win_rate_50',
@@ -200,4 +258,5 @@ export const ACHIEVEMENT_CATEGORIES = {
   daily: 'Daily Challenge',
   winrate: 'Win Rate',
   ultimate: 'Ultimate',
+  speed: 'Speed Mode',
 };

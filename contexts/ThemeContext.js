@@ -7,6 +7,7 @@ const ThemeContext = createContext();
 export function ThemeProvider({ children }) {
   const [currentTheme, setCurrentTheme] = useState('dark');
   const [colors, setColors] = useState(THEMES.dark);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadTheme();
@@ -14,11 +15,14 @@ export function ThemeProvider({ children }) {
 
   const loadTheme = async () => {
     try {
+      setIsLoading(true);
       const settings = await Storage.getSettings();
       changeTheme(settings.theme || 'dark');
     } catch (error) {
       console.error('Error loading theme:', error);
       changeTheme('dark');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -30,7 +34,7 @@ export function ThemeProvider({ children }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ currentTheme, colors, changeTheme }}>
+    <ThemeContext.Provider value={{ currentTheme, colors, changeTheme, isLoading }}>
       {children}
     </ThemeContext.Provider>
   );

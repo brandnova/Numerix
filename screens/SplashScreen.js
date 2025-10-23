@@ -25,7 +25,7 @@ export default function SplashScreen({ navigation }) {
         />
       </View>
       
-      <Text style={[styles.version, { color: colors.textMuted }]}>v1.0.0</Text>
+      <Text style={[styles.version, { color: colors.textMuted }]}>v2.0.0</Text>
     </View>
   );
 }

@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { TYPOGRAPHY, SPACING } from '../constants/theme';
 import { useTheme } from '../contexts/ThemeContext';
 import { ACHIEVEMENTS } from '../constants/achievements';
 import { Storage } from '../utils/storage';
 import AchievementBadge from '../components/AchievementBadge';
+import { useNavigation } from '@react-navigation/native';
 
 export default function AchievementsScreen() {
   const { colors } = useTheme();
+  const navigation = useNavigation();
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const [stats, setStats] = useState(null);
 
@@ -35,7 +37,16 @@ export default function AchievementsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.title, { color: colors.text }]}>Achievements</Text>
+        {/* Header - Consistent with Settings Screen */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: colors.text }]}>Achievements</Text>
+          <Pressable 
+            onPress={() => navigation.goBack()} 
+            style={[styles.backButton, { backgroundColor: colors.cardBg, borderColor: colors.border }]}
+          >
+            <Text style={[styles.backButtonText, { color: colors.text }]}>Back</Text>
+          </Pressable>
+        </View>
 
         {/* Progress Bar */}
         {progress && (
@@ -88,9 +99,25 @@ const styles = StyleSheet.create({
     padding: SPACING.xxl,
     paddingTop: 50,
   },
+  // Updated Header - Consistent with Settings Screen
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xxl,
+  },
   title: {
     ...TYPOGRAPHY.title,
-    marginBottom: SPACING.xxl,
+  },
+  backButton: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: SPACING.sm,
+    borderWidth: 1,
+  },
+  backButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   progressSection: {
     borderRadius: SPACING.md,
