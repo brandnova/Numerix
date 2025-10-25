@@ -2,7 +2,7 @@ Implement more settings for SFX and others.
 
 Always change app version in app.json, splash screen, settings screen, and check for others.
 
-Integrate new setup with achievements and stats display
+Integrate new setup and features with achievements and stats display
 
 Add idle backgroung effects.
 
@@ -13,10 +13,11 @@ Submit button on game screen
 
 What kind of game modes are you thinking about? Some popular options for number guessing games could be:
 
+1. **Practice Mode** - No stakes, just practice your skills
 2. **Endless Mode** - Continuously guessing with increasing difficulty
-3. **Binary Search** - Educational mode teaching optimal search strategies
-4. **Multiplayer** - Compete against friends or global leaderboards
+3. **Puzzle Mode** - Solve mathematical puzzles to find the number ✔
+4. **Multiplayer** - Compete against friends locally or on global leaderboards
 5. **Story Mode** - Progressive challenges with narrative
-6. **Practice Mode** - No stakes, just practice your skills
+6. **Betting Mode** - Players can bet with in-app tokens to win more, or bet against each other on local multiplayer
 
 Which direction interests you most? I can help you design and implement any of these!

@@ -5,6 +5,7 @@ const KEYS = {
   ACHIEVEMENTS: '@numerix_achievements',
   DAILY_CHALLENGE: '@numerix_daily_challenge',
   SPEED_STATS: '@numerix_speed_stats',
+  PUZZLE_STATS: '@numerix_puzzle_stats',
   SETTINGS: '@numerix_settings',
 };
 
@@ -87,6 +88,60 @@ const DEFAULT_SPEED_STATS = {
     4: { completions: 0, bestTime: null, bestScore: 0 },
     5: { completions: 0, bestTime: null, bestScore: 0 },
   }
+};
+
+const DEFAULT_PUZZLE_STATS = {
+  totalGames: 0,
+  totalWins: 0,
+  totalLosses: 0,
+  currentWinStreak: 0,
+  longestWinStreak: 0,
+  bestTime: null,
+  totalHintsUsed: 0, // Add this
+  byType: {
+    mathematical: { 
+      games: 0, 
+      wins: 0, 
+      totalAttempts: 0, 
+      bestAttempts: null, 
+      bestTime: null,
+      totalHintsUsed: 0,
+      averageHintsUsed: 0,
+    },
+    logical: { 
+      games: 0, 
+      wins: 0, 
+      totalAttempts: 0, 
+      bestAttempts: null, 
+      bestTime: null,
+      totalHintsUsed: 0,
+      averageHintsUsed: 0,
+    },
+    pattern: { 
+      games: 0, 
+      wins: 0, 
+      totalAttempts: 0, 
+      bestAttempts: null, 
+      bestTime: null,
+      totalHintsUsed: 0,
+      averageHintsUsed: 0,
+    },
+    wordplay: { 
+      games: 0, 
+      wins: 0, 
+      totalAttempts: 0, 
+      bestAttempts: null, 
+      bestTime: null,
+      totalHintsUsed: 0,
+      averageHintsUsed: 0,
+    },
+  },
+  byDifficulty: {
+    easy: { games: 0, wins: 0, bestTime: null, totalHintsUsed: 0 },
+    medium: { games: 0, wins: 0, bestTime: null, totalHintsUsed: 0 },
+    hard: { games: 0, wins: 0, bestTime: null, totalHintsUsed: 0 },
+    extreme: { games: 0, wins: 0, bestTime: null, totalHintsUsed: 0 },
+  },
 };
 
 export const Storage = {
@@ -212,6 +267,28 @@ export const Storage = {
       return true;
     } catch (error) {
       console.error('Error saving speed stats:', error);
+      return false;
+    }
+  },
+
+  // Get puzzle stats
+  async getPuzzleStats() {
+    try {
+      const data = await AsyncStorage.getItem(KEYS.PUZZLE_STATS);
+      return data ? JSON.parse(data) : DEFAULT_PUZZLE_STATS;
+    } catch (error) {
+      console.error('Error reading puzzle stats:', error);
+      return DEFAULT_PUZZLE_STATS;
+    }
+  },
+
+  // Save puzzle stats
+  async savePuzzleStats(stats) {
+    try {
+      await AsyncStorage.setItem(KEYS.PUZZLE_STATS, JSON.stringify(stats));
+      return true;
+    } catch (error) {
+      console.error('Error saving puzzle stats:', error);
       return false;
     }
   },

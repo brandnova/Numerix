@@ -362,6 +362,141 @@ export const GAME_MODES = {
       }
     },
   },
+
+  // PUZZLE MODE - Mathematical challenges
+  puzzle: {
+    id: 'puzzle',
+    name: 'Puzzle Mode',
+    description: 'Solve riddles and puzzles to find the number',
+    icon: '🧩',
+    color: 'purple',
+    
+    getConfig: (puzzleChallenge) => {
+      console.log('🧩 Building Puzzle Config from:', puzzleChallenge);
+      
+      // Validate puzzle challenge object
+      if (!puzzleChallenge || typeof puzzleChallenge !== 'object') {
+        console.error('❌ Invalid puzzle challenge object:', puzzleChallenge);
+        return null;
+      }
+      
+      const {
+        solution,
+        puzzle,
+        hints,
+        maxAttempts,
+        timeLimit,
+        difficulty,
+        type,
+        maxRange,
+        hintsAvailable,
+        typeInfo,
+      } = puzzleChallenge;
+      
+      // More flexible validation - check for critical fields
+      if (solution === undefined || solution === null) {
+        console.error('❌ Missing solution field');
+        return null;
+      }
+      
+      if (!puzzle || typeof puzzle !== 'string') {
+        console.error('❌ Missing or invalid puzzle field');
+        return null;
+      }
+      
+      if (!Array.isArray(hints) || hints.length === 0) {
+        console.error('❌ Missing or invalid hints field');
+        return null;
+      }
+      
+      // Provide defaults for optional fields
+      const config = {
+        mode: 'puzzle',
+        modeId: 'puzzle',
+        difficulty: difficulty || 'medium',
+        hasTimer: true,
+        timerDuration: timeLimit || 180,
+        max: maxRange || 100,
+        trials: maxAttempts || 5,
+        name: 'Puzzle Challenge',
+        color: 'purple',
+        targetNumber: parseInt(solution),
+        puzzleText: puzzle,
+        puzzleHints: hints,
+        hintsAvailable: hintsAvailable || Math.min(3, hints.length),
+        hintsUsed: 0,
+        puzzleType: type || 'mathematical',
+        typeInfo: typeInfo || { name: 'Puzzle', icon: '🧩' },
+        specialRule: 'puzzle_solving',
+        instructions: puzzle,
+      };
+      
+      // Final validation of target number
+      if (isNaN(config.targetNumber)) {
+        console.error('❌ Invalid target number:', solution);
+        return null;
+      }
+      
+      console.log('✅ Puzzle Config Created:', config);
+      return config;
+    },
+    
+    generateTarget: (config) => {
+      return config.targetNumber;
+    },
+    
+    validateGuess: (guess, target, config, gameState) => {
+      const numGuess = parseInt(guess);
+      if (isNaN(numGuess) || numGuess < 0 || numGuess > config.max) {
+        return { valid: false, message: `Enter a number between 0 and ${config.max}` };
+      }
+      if (gameState.guessHistory.includes(numGuess)) {
+        return { valid: false, message: `Already tried ${numGuess}` };
+      }
+      return { valid: true, guess: numGuess };
+    },
+    
+    handleGuess: (guess, target, config, gameState) => {
+      const newTrials = gameState.trialsLeft - 1;
+      const newHistory = [...gameState.guessHistory, guess];
+      
+      if (guess === target) {
+        return { 
+          status: 'won', 
+          trialsLeft: newTrials, 
+          guessHistory: newHistory,
+          hint: `🎊 Puzzle Solved! The answer was ${target}`,
+        };
+      } else if (newTrials === 0) {
+        return { 
+          status: 'lost', 
+          trialsLeft: 0, 
+          guessHistory: newHistory,
+          hint: `🧩 Puzzle Failed! The answer was ${target}`,
+        };
+      } else {
+        // Provide contextual hints based on how close they are
+        const diff = Math.abs(guess - target);
+        let hintText;
+        
+        if (diff <= 3) {
+          hintText = `🔥 Very close! Try ${guess < target ? 'slightly higher' : 'slightly lower'}`;
+        } else if (diff <= 10) {
+          hintText = `Getting warmer... Go ${guess < target ? 'higher' : 'lower'}`;
+        } else {
+          hintText = `❌ Not quite. ${newTrials} ${newTrials === 1 ? 'attempt' : 'attempts'} left`;
+        }
+        
+        return {
+          status: 'playing',
+          trialsLeft: newTrials,
+          guessHistory: newHistory,
+          hint: hintText,
+          proximity: diff <= 3 ? 'very_close' : diff <= 10 ? 'close' : 'far',
+        };
+      }
+    },
+  },
 };
 
 export const getGameMode = (modeId) => GAME_MODES[modeId] || GAME_MODES.classic;

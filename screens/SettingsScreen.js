@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Switch, Alert } from 're
 import { SPACING, TYPOGRAPHY, THEMES } from '../constants/theme';
 import { Storage } from '../utils/storage';
 import { useTheme } from '../contexts/ThemeContext';
+import { NotificationService } from '../utils/notifications';
 
 const THEME_OPTIONS = [
   { id: 'dark', name: 'Dark', description: 'Classic dark theme' },
@@ -34,6 +35,50 @@ export default function SettingsScreen({ navigation }) {
     await Storage.saveSettings(updatedSettings);
   };
 
+  // Enhanced notification toggle with immediate feedback
+  const handleToggleNotification = async () => {
+    const updatedSettings = { ...settings, notifications: !settings.notifications };
+    setSettings(updatedSettings);
+    await Storage.saveSettings(updatedSettings);
+    
+    if (updatedSettings.notifications) {
+      const permissionsGranted = await NotificationService.requestPermissions();
+      if (permissionsGranted) {
+        await NotificationService.scheduleDailyReminder();
+        Alert.alert(
+          'Notifications Enabled', 
+          'You will receive daily reminders at 6 PM to keep your streak alive! 🔥'
+        );
+      } else {
+        // If permissions denied, revert the toggle
+        const revertedSettings = { ...updatedSettings, notifications: false };
+        setSettings(revertedSettings);
+        await Storage.saveSettings(revertedSettings);
+      }
+    } else {
+      await NotificationService.cancelAllNotifications();
+      Alert.alert(
+        'Notifications Disabled', 
+        'You will no longer receive daily reminders.'
+      );
+    }
+  };
+
+  // Test notification function
+  const handleTestNotification = async () => {
+    const success = await NotificationService.scheduleTestNotification();
+    if (success) {
+      Alert.alert('Success', 'Test notification sent!');
+    } else {
+      Alert.alert('Error', 'Failed to send test notification. Please check if notifications are enabled.');
+    }
+  };
+
+  // Coming soon alert for disabled features
+  const handleComingSoon = (featureName) => {
+    Alert.alert('Coming Soon', `${featureName} will be available in a future update!`);
+  };
+
   const handleClearData = () => {
     Alert.alert(
       'Clear All Data',
@@ -45,6 +90,8 @@ export default function SettingsScreen({ navigation }) {
           style: 'destructive',
           onPress: async () => {
             await Storage.clearAll();
+            // Also cancel notifications when data is cleared
+            await NotificationService.cancelAllNotifications();
             Alert.alert('Success', 'All data has been cleared');
             navigation.replace('Home');
           },
@@ -56,7 +103,7 @@ export default function SettingsScreen({ navigation }) {
   const handleAbout = () => {
     Alert.alert(
       'About NUMERIX',
-      'NUMERIX v1.0.0\n\nA number guessing challenge game that tests your intuition and logic.\n\nDeveloped with React Native & Expo',
+      'NUMERIX v2.1.0\n\nA number guessing challenge game that tests your intuition and logic.\n\nDeveloped by Brand Nova with React Native & Expo',
       [{ text: 'OK' }]
     );
   };
@@ -101,6 +148,44 @@ export default function SettingsScreen({ navigation }) {
           </Pressable>
         </View>
 
+        {/* Notifications Section - MOVED UP */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Notifications</Text>
+          
+          <View style={[styles.settingRow, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
+            <View style={styles.settingInfo}>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>Daily Reminders</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Get reminded to complete daily challenges
+              </Text>
+            </View>
+            <Switch
+              value={settings.notifications}
+              onValueChange={handleToggleNotification}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.text}
+            />
+          </View>
+
+          {/* Test Notification Button - Only show if notifications are enabled */}
+          {settings.notifications && (
+            <Pressable 
+              style={[styles.testButton, { backgroundColor: colors.primary + '20', borderColor: colors.primary }]} 
+              onPress={handleTestNotification}
+            >
+              <Text style={[styles.testButtonText, { color: colors.primary }]}>🔔 Test Notification</Text>
+            </Pressable>
+          )}
+
+          <View style={[styles.notificationInfo, { backgroundColor: colors.primary + '10' }]}>
+            <Text style={[styles.notificationInfoText, { color: colors.textSecondary }]}>
+              📅 Daily reminders at 6 PM{'\n'}
+              🔥 Streak protection at 9 PM if not played{'\n'}
+              📊 Weekly progress summary on Sundays
+            </Text>
+          </View>
+        </View>
+
         {/* Audio Settings */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Audio</Text>
@@ -108,26 +193,34 @@ export default function SettingsScreen({ navigation }) {
           <View style={[styles.settingRow, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
             <View style={styles.settingInfo}>
               <Text style={[styles.settingLabel, { color: colors.text }]}>Sound Effects</Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Play sound effects</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Play sound effects during gameplay
+                <Text style={[styles.comingSoonText, { color: colors.warning }]}> • Coming Soon</Text>
+              </Text>
             </View>
             <Switch
               value={settings.soundEnabled}
-              onValueChange={() => handleToggleSetting('soundEnabled')}
+              onValueChange={() => handleComingSoon('Sound Effects')}
               trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor={colors.text}
+              disabled={true}
             />
           </View>
 
           <View style={[styles.settingRow, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
             <View style={styles.settingInfo}>
               <Text style={[styles.settingLabel, { color: colors.text }]}>Background Music</Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Play background music</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Play background music in menus
+                <Text style={[styles.comingSoonText, { color: colors.warning }]}> • Coming Soon</Text>
+              </Text>
             </View>
             <Switch
               value={settings.musicEnabled}
-              onValueChange={() => handleToggleSetting('musicEnabled')}
+              onValueChange={() => handleComingSoon('Background Music')}
               trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor={colors.text}
+              disabled={true}
             />
           </View>
         </View>
@@ -139,26 +232,17 @@ export default function SettingsScreen({ navigation }) {
           <View style={[styles.settingRow, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
             <View style={styles.settingInfo}>
               <Text style={[styles.settingLabel, { color: colors.text }]}>Haptic Feedback</Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Vibration on interactions</Text>
+              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                Vibration on interactions
+                <Text style={[styles.comingSoonText, { color: colors.warning }]}> • Coming Soon</Text>
+              </Text>
             </View>
             <Switch
               value={settings.hapticFeedback}
-              onValueChange={() => handleToggleSetting('hapticFeedback')}
+              onValueChange={() => handleComingSoon('Haptic Feedback')}
               trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor={colors.text}
-            />
-          </View>
-
-          <View style={[styles.settingRow, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
-            <View style={styles.settingInfo}>
-              <Text style={[styles.settingLabel, { color: colors.text }]}>Notifications</Text>
-              <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>Daily challenge reminders</Text>
-            </View>
-            <Switch
-              value={settings.notifications}
-              onValueChange={() => handleToggleSetting('notifications')}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.text}
+              disabled={true}
             />
           </View>
         </View>
@@ -177,7 +261,7 @@ export default function SettingsScreen({ navigation }) {
 
           <Pressable 
             style={[styles.actionButton, { backgroundColor: colors.cardBg, borderColor: colors.border }]} 
-            onPress={() => Alert.alert('Coming Soon', 'Tutorial feature coming soon!')}
+            onPress={() => handleComingSoon('Tutorial')}
           >
             <Text style={[styles.actionButtonText, { color: colors.text }]}>How to Play</Text>
             <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>➡</Text>
@@ -185,7 +269,7 @@ export default function SettingsScreen({ navigation }) {
 
           <Pressable 
             style={[styles.actionButton, { backgroundColor: colors.cardBg, borderColor: colors.border }]} 
-            onPress={() => Alert.alert('Coming Soon', 'Rate feature coming soon!')}
+            onPress={() => handleComingSoon('Rating')}
           >
             <Text style={[styles.actionButtonText, { color: colors.text }]}>Rate NUMERIX</Text>
             <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>➡</Text>
@@ -193,7 +277,7 @@ export default function SettingsScreen({ navigation }) {
 
           <Pressable 
             style={[styles.actionButton, { backgroundColor: colors.cardBg, borderColor: colors.border }]} 
-            onPress={() => Alert.alert('Coming Soon', 'Share feature coming soon!')}
+            onPress={() => handleComingSoon('Sharing')}
           >
             <Text style={[styles.actionButtonText, { color: colors.text }]}>Share with Friends</Text>
             <Text style={[styles.actionButtonArrow, { color: colors.textSecondary }]}>➡</Text>
@@ -212,7 +296,7 @@ export default function SettingsScreen({ navigation }) {
           </Pressable>
         </View>
 
-        <Text style={[styles.versionText, { color: colors.textMuted }]}>NUMERIX v2.0.0</Text>
+        <Text style={[styles.versionText, { color: colors.textMuted }]}>NUMERIX v2.1.0</Text>
       </ScrollView>
     </View>
   );
@@ -257,37 +341,6 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     marginBottom: SPACING.md,
   },
-  themeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
-  },
-  themeCard: {
-    width: '48%',
-    borderRadius: SPACING.md,
-    padding: SPACING.md,
-    borderWidth: 2,
-  },
-  themePreview: {
-    height: 60,
-    borderRadius: SPACING.sm,
-    marginBottom: SPACING.sm,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  themeAccent: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-  },
-  themeName: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-  },
-  themeDescription: {
-    fontSize: 11,
-  },
   settingRow: {
     borderRadius: SPACING.md,
     padding: SPACING.lg,
@@ -308,6 +361,29 @@ const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 13,
+  },
+  comingSoonText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  testButton: {
+    borderRadius: SPACING.md,
+    padding: SPACING.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    marginBottom: SPACING.md,
+  },
+  testButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  notificationInfo: {
+    borderRadius: SPACING.md,
+    padding: SPACING.md,
+  },
+  notificationInfoText: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   actionButton: {
     borderRadius: SPACING.md,

@@ -246,7 +246,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 100,
   },
-  // Updated Header - Consistent with Settings Screen
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -267,7 +266,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   section: {
-    marginBottom: SPACING.xl, // More compact spacing
+    marginBottom: SPACING.xl,
   },
   sectionTitle: {
     ...TYPOGRAPHY.caption,
@@ -276,49 +275,49 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.sm, // More compact gap
+    gap: SPACING.sm,
   },
   statCard: {
     borderRadius: SPACING.md,
-    padding: SPACING.md, // More compact padding
+    padding: SPACING.md,
     flex: 1,
     minWidth: '45%',
     alignItems: 'center',
     borderWidth: 1,
-    minHeight: 70, // Consistent height
+    minHeight: 70,
     justifyContent: 'center',
   },
   statValue: {
-    fontSize: 20, // Slightly smaller
+    fontSize: 20,
     fontWeight: '700',
     marginBottom: SPACING.xs,
   },
   statLabel: {
     ...TYPOGRAPHY.caption,
     textAlign: 'center',
-    fontSize: 10, // Smaller font
+    fontSize: 10,
   },
   achievementCard: {
     borderRadius: SPACING.md,
-    padding: SPACING.md, // More compact
+    padding: SPACING.md,
     borderWidth: 1,
   },
   achievementHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm, // More compact
+    marginBottom: SPACING.sm,
   },
   achievementTitle: {
-    fontSize: 14, // Smaller
+    fontSize: 14,
     fontWeight: '600',
   },
   achievementPercentage: {
-    fontSize: 14, // Smaller
+    fontSize: 14,
     fontWeight: '700',
   },
   progressBar: {
-    height: 6, // Thinner
+    height: 6,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -328,14 +327,14 @@ const styles = StyleSheet.create({
   },
   difficultyCard: {
     borderRadius: SPACING.md,
-    padding: SPACING.md, // More compact
-    marginBottom: SPACING.sm, // More compact
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
     borderWidth: 1,
   },
   difficultyName: {
-    fontSize: 16, // Smaller
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: SPACING.sm, // More compact
+    marginBottom: SPACING.sm,
   },
   difficultyStats: {
     flexDirection: 'row',
@@ -346,12 +345,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   difficultyStatValue: {
-    fontSize: 14, // Smaller
+    fontSize: 14,
     fontWeight: '700',
     marginBottom: SPACING.xs,
   },
   difficultyStatLabel: {
-    fontSize: 9, // Smaller
+    fontSize: 9,
     textTransform: 'uppercase',
     textAlign: 'center',
   },

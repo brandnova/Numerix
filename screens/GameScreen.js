@@ -7,6 +7,7 @@ import { Storage } from '../utils/storage';
 import { AchievementSystem } from '../utils/achievementSystem';
 import { DailyChallengeGenerator } from '../utils/dailyChallengeGenerator';
 import { SpeedChallengeGenerator } from '../utils/speedChallengeGenerator';
+import { PuzzleChallengeGenerator } from '../utils/puzzleChallengeGenerator';
 import TrialIndicator from '../components/TrialIndicator';
 import HintDisplay from '../components/HintDisplay';
 import GuessHistory from '../components/GuessHistory';
@@ -19,9 +20,10 @@ export default function GameScreen({ route, navigation }) {
     difficulty,
     dailyChallenge,
     speedChallenge,
+    puzzleChallenge,
   } = route.params;
 
-  console.log('🎮 Game Screen Initialized:', { mode, difficulty, dailyChallenge, speedChallenge });
+  console.log('🎮 Game Screen Initialized:', { mode, difficulty, dailyChallenge, speedChallenge, puzzleChallenge });
   
   // Get the appropriate game mode
   const gameMode = getGameMode(mode);
@@ -40,6 +42,58 @@ export default function GameScreen({ route, navigation }) {
     if (!config) {
       Alert.alert('Error', 'Invalid speed challenge configuration');
       navigation.goBack();
+      return null;
+    }
+  } else if (mode === 'puzzle') {
+    if (!route.params?.puzzleChallenge) {
+      console.error('❌ No puzzle challenge in route params:', route.params);
+      
+      // More user-friendly error
+      Alert.alert(
+        'Oops! 🧩',
+        'Something went wrong loading your puzzle. This usually happens when:\n\n' +
+        '• The puzzle didn\'t load properly\n' +
+        '• There was a navigation error\n\n' +
+        'Let\'s go back and try selecting a puzzle again.',
+        [
+          { 
+            text: 'Go Back', 
+            onPress: () => navigation.navigate('PuzzleMode'),
+            style: 'default'
+          }
+        ]
+      );
+      return null;
+    }
+    
+    const { puzzleChallenge } = route.params;
+    console.log('🧩 Puzzle Challenge received:', puzzleChallenge);
+    
+    config = gameMode.getConfig(puzzleChallenge);
+    
+    if (!config) {
+      console.error('❌ Failed to create puzzle config from:', puzzleChallenge);
+      
+      Alert.alert(
+        'Puzzle Loading Error 🧩',
+        'We couldn\'t set up this puzzle properly. This might be a temporary glitch.\n\n' +
+        'Please try:\n' +
+        '• Going back and selecting the puzzle again\n' +
+        '• Choosing a different puzzle type\n' +
+        '• Restarting the app if the problem persists',
+        [
+          { 
+            text: 'Try Again', 
+            onPress: () => navigation.navigate('PuzzleMode'),
+            style: 'default'
+          },
+          {
+            text: 'Go Home',
+            onPress: () => navigation.navigate('Home'),
+            style: 'cancel'
+          }
+        ]
+      );
       return null;
     }
   } else {
@@ -80,6 +134,7 @@ export default function GameScreen({ route, navigation }) {
     guessHistory: [],
     proximity: null,
     timeLeft: config.hasTimer ? config.timerDuration : null,
+    hintsUsed: 0,
   });
   
   const [settings, setSettings] = useState(null);
@@ -211,6 +266,8 @@ export default function GameScreen({ route, navigation }) {
       updatedStats = await handleDailyStats(result, stats, timeTaken);
     } else if (mode === 'speed') {
       updatedStats = await handleSpeedStats(result, stats, timeTaken);
+    } else if (mode === 'puzzle') {
+      updatedStats = await handlePuzzleStats(result, stats, timeTaken);
     }
 
     await Storage.saveStats(updatedStats);
@@ -425,8 +482,98 @@ export default function GameScreen({ route, navigation }) {
     return updatedStats;
   };
 
+  const handlePuzzleStats = async (result, stats, timeTaken) => {
+    const attemptsUsed = config.trials - gameState.trialsLeft + 1;
+    const timeRemaining = gameState.timeLeft || 0;
+    const hintsUsed = gameState.hintsUsed; // Get from game state
+    
+    // Update puzzle-specific stats (pass hints used)
+    await PuzzleChallengeGenerator.updateStats(
+      result === 'won',
+      puzzleChallenge,
+      timeRemaining,
+      attemptsUsed,
+      hintsUsed // Add this parameter
+    );
+
+    // Track in the appropriate difficulty bucket
+    const difficultyKey = config.difficulty || 'medium';
+    
+    const updatedStats = {
+      ...stats,
+      totalGames: stats.totalGames + 1,
+      totalWins: result === 'won' ? stats.totalWins + 1 : stats.totalWins,
+      totalLosses: result === 'lost' ? stats.totalLosses + 1 : stats.totalLosses,
+      byDifficulty: {
+        ...stats.byDifficulty,
+        [difficultyKey]: {
+          games: (stats.byDifficulty[difficultyKey]?.games || 0) + 1,
+          wins: result === 'won' ? (stats.byDifficulty[difficultyKey]?.wins || 0) + 1 : (stats.byDifficulty[difficultyKey]?.wins || 0),
+          totalAttempts: (stats.byDifficulty[difficultyKey]?.totalAttempts || 0) + attemptsUsed,
+          bestAttempts: result === 'won' 
+            ? (stats.byDifficulty[difficultyKey]?.bestAttempts 
+                ? Math.min(stats.byDifficulty[difficultyKey].bestAttempts, attemptsUsed)
+                : attemptsUsed)
+            : stats.byDifficulty[difficultyKey]?.bestAttempts,
+        },
+      },
+    };
+
+    // Show completion stats for puzzle mode
+    if (result === 'won') {
+      setTimeout(() => {
+        Alert.alert(
+          '🧩 Puzzle Solved!',
+          `Type: ${config.typeInfo?.name || 'Puzzle'}\n` +
+          `Difficulty: ${config.difficulty}\n` +
+          `Attempts: ${attemptsUsed}\n` +
+          `Hints Used: ${hintsUsed}/${config.hintsAvailable}\n` +
+          `Time: ${Math.floor((Date.now() - startTime.current) / 1000)}s`,
+          [{ text: 'Awesome!', style: 'default' }]
+        );
+      }, 1000);
+    }
+
+    console.log('📊 Puzzle Stats Updated:', updatedStats);
+    return updatedStats;
+  };
+
   const handlePlayAgain = () => {
-    navigation.replace('Game', route.params);
+    if (mode === 'puzzle') {
+      // Generate a new puzzle with same difficulty and type
+      const newPuzzle = PuzzleChallengeGenerator.generateChallenge(
+        config.difficulty,
+        config.puzzleType
+      );
+      
+      if (!newPuzzle) {
+        Alert.alert(
+          'Error',
+          'Failed to generate a new puzzle. Please go back and try again.',
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+        return;
+      }
+      
+      // Navigate with new puzzle
+      navigation.replace('Game', {
+        mode: 'puzzle',
+        puzzleChallenge: newPuzzle,
+      });
+    } else if (mode === 'daily') {
+      // For daily, reload the same challenge
+      navigation.replace('Game', route.params);
+    } else if (mode === 'speed') {
+      // For speed, generate new challenge with same difficulty
+      const newSpeedChallenge = SpeedChallengeGenerator.generateChallenge(config.difficulty);
+      navigation.replace('Game', {
+        mode: 'speed',
+        speedChallenge: newSpeedChallenge,
+      });
+    } else {
+      // For classic, reload with same params
+      navigation.replace('Game', route.params);
+    }
   };
 
   const handleGoHome = () => {
@@ -463,17 +610,10 @@ export default function GameScreen({ route, navigation }) {
         <View style={styles.header}>
           <Text style={[styles.title, { color: colors.text }]}>Game</Text>
           <Pressable 
-            onPress={handleGoHome}
-            style={({ pressed }) => [
-              styles.backButton, 
-              { 
-                backgroundColor: colors.cardBg, 
-                borderColor: colors.border,
-                opacity: pressed ? 0.8 : 1,
-              }
-            ]}
+            onPress={() => navigation.goBack()} 
+            style={[styles.backButton, { backgroundColor: colors.cardBg, borderColor: colors.border }]}
           >
-            <Text style={[styles.backButtonText, { color: colors.text }]}>Home</Text>
+            <Text style={[styles.backButtonText, { color: colors.text }]}>Back</Text>
           </Pressable>
         </View>
 
@@ -508,6 +648,67 @@ export default function GameScreen({ route, navigation }) {
               {config.specialRule === 'time_pressure' && 'Beat the clock!'}
               {config.specialRule?.includes('time_limit') && `${config.timerDuration}s time limit`}
             </Text>
+          </View>
+        )}
+
+        {/* Puzzle Display */}
+        {mode === 'puzzle' && gameState.status === 'playing' && (
+          <View style={[styles.puzzleCard, { backgroundColor: colors.cardBg, borderColor: colors.purple }]}>
+            <View style={styles.puzzleHeader}>
+              <Text style={[styles.puzzleTypeIcon, { color: colors.purple }]}>
+                {config.typeInfo?.icon || '🧩'}
+              </Text>
+              <Text style={[styles.puzzleType, { color: colors.purple }]}>
+                {config.typeInfo?.name || 'Puzzle'}
+              </Text>
+            </View>
+            <Text style={[styles.puzzleText, { color: colors.text }]}>
+              {config.puzzleText}
+            </Text>
+          </View>
+        )}
+
+        {/* Hints Section for Puzzle Mode */}
+        {mode === 'puzzle' && config.hintsAvailable > 0 && gameState.status === 'playing' && (
+          <View style={styles.hintsSection}>
+            <View style={styles.hintsHeader}>
+              <Text style={[styles.hintsTitle, { color: colors.textSecondary }]}>
+                Available Hints: {config.hintsAvailable - gameState.hintsUsed}
+              </Text>
+              {gameState.hintsUsed < config.hintsAvailable && (
+                <Pressable
+                  onPress={() => {
+                    const nextHint = config.puzzleHints[gameState.hintsUsed];
+                    if (nextHint) {
+                      Alert.alert('💡 Hint', nextHint, [
+                        {
+                          text: 'Got it!',
+                          onPress: () => {
+                            // Update hints used in game state
+                            setGameState(prev => ({ 
+                              ...prev, 
+                              hintsUsed: prev.hintsUsed + 1 
+                            }));
+                          }
+                        }
+                      ]);
+                    }
+                  }}
+                  style={[styles.hintButton, { backgroundColor: colors.primary }]}
+                >
+                  <Text style={styles.hintButtonText}>💡 Get Hint</Text>
+                </Pressable>
+              )}
+            </View>
+            {gameState.hintsUsed > 0 && (
+              <View style={[styles.usedHintsContainer, { backgroundColor: colors.primary + '10' }]}>
+                {config.puzzleHints.slice(0, gameState.hintsUsed).map((hint, idx) => (
+                  <Text key={idx} style={[styles.usedHint, { color: colors.text }]}>
+                    💡 {hint}
+                  </Text>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
@@ -712,6 +913,64 @@ const styles = StyleSheet.create({
   },
   specialRuleText: {
     fontSize: 14,
+    lineHeight: 18,
+  },
+  puzzleCard: {
+    borderRadius: SPACING.md,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    borderWidth: 2,
+  },
+  puzzleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  puzzleTypeIcon: {
+    fontSize: 24,
+    marginRight: SPACING.sm,
+  },
+  puzzleType: {
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  puzzleText: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '500',
+  },
+  hintsSection: {
+    marginBottom: SPACING.lg,
+  },
+  hintsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  hintsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  hintButton: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: SPACING.sm,
+  },
+  hintButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  usedHintsContainer: {
+    borderRadius: SPACING.sm,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  },
+  usedHint: {
+    fontSize: 13,
     lineHeight: 18,
   },
   inputSection: {

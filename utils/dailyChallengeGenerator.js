@@ -1,4 +1,5 @@
 import { Storage } from './storage';
+import { NotificationService } from './notifications';
 
 export const DailyChallengeGenerator = {
   
@@ -143,7 +144,7 @@ export const DailyChallengeGenerator = {
     return yesterdayResult?.won === true;
   },
 
-  // Update streak after completing daily challenge
+  // Update streak after completing daily challenge - ADD NOTIFICATION HERE
   async updateStreak(won, dailyData) {
     const today = new Date().toISOString().split('T')[0];
     
@@ -203,6 +204,34 @@ export const DailyChallengeGenerator = {
       previousStreak: dailyData.currentStreak,
     });
 
+    // 🔔 CRITICAL: ADD NOTIFICATION SCHEDULING HERE
+    try {
+      // Schedule streak reminder for tomorrow if user completed today
+      if (won) {
+        await NotificationService.scheduleStreakReminder();
+        
+        // Schedule personalized reminder based on streak length
+        if (newStreak >= 3) {
+          await NotificationService.schedulePersonalizedReminder();
+        }
+      }
+    } catch (error) {
+      console.error('Error scheduling notifications:', error);
+      // Don't let notification errors break the streak update
+    }
+
     return updatedDailyData;
+  },
+
+  // NEW: Initialize notifications when app starts (call this from App.js)
+  async initializeNotifications() {
+    try {
+      const settings = await Storage.getSettings();
+      if (settings.notifications) {
+        await NotificationService.initialize();
+      }
+    } catch (error) {
+      console.error('Error initializing notifications:', error);
+    }
   },
 };

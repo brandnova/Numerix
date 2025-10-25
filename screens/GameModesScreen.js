@@ -53,20 +53,23 @@ export default function GameModesScreen({ navigation }) {
       stats: stats?.speedStats?.bestTime ? `Best: ${stats.speedStats.bestTime}s` : 'Not played yet',
     },
     {
-      id: 'coming_soon_1',
-      name: 'Multiplayer Mode',
-      icon: '👥',
-      description: 'Compete with friends in real-time',
-      color: colors.info,
-      disabled: true,
-      stats: 'Coming Soon',
-    },
-    {
-      id: 'coming_soon_2',
+      id: 'puzzle',
       name: 'Puzzle Mode',
       icon: '🧩',
       description: 'Solve mathematical puzzles to find the number',
       color: colors.purple,
+      disabled: false,
+      action: () => navigation.navigate('PuzzleMode'),
+      stats: stats?.puzzleStats?.totalWins 
+        ? `${stats.puzzleStats.totalWins} solved` 
+        : 'Not played yet',
+    },
+    {
+      id: 'coming_soon_2',
+      name: 'Multiplayer Mode',
+      icon: '👥',
+      description: 'Compete with friends in real-time',
+      color: colors.info,
       disabled: true,
       stats: 'Coming Soon',
     },
